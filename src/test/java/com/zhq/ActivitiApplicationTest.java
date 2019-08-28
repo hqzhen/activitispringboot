@@ -45,14 +45,14 @@ public class ActivitiApplicationTest {
     }
 
     /**
-     * 测试启动一个流程
+     * 测试启动一个流程，然后正常走完流程
      */
     @Test
     public void testStartFirstBPMN(){
         //通过key启动一个流程
-        ProcessInstance myProcess_1 = runtimeService.startProcessInstanceByKey("myProcess");
+        ProcessInstance myProcess = runtimeService.startProcessInstanceByKey("myProcess");
         //获取当前流程节点
-        Task task = taskService.createTaskQuery().processInstanceId(myProcess_1.getId()).singleResult();
+        Task task = taskService.createTaskQuery().processInstanceId(myProcess.getId()).singleResult();
         while (Boolean.TRUE){
             if(task==null){
                 System.out.println("流程结束："+task);
@@ -62,7 +62,7 @@ public class ActivitiApplicationTest {
                 //完成当前节点
                 taskService.complete(task.getId());
                 //再次获取当前节点
-                task = taskService.createTaskQuery().processInstanceId(myProcess_1.getId()).singleResult();
+                task = taskService.createTaskQuery().processInstanceId(myProcess.getId()).singleResult();
             }
         }
     }
