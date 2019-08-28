@@ -1,8 +1,6 @@
 package com.zhq;
 
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.RuntimeService;
-import org.activiti.engine.TaskService;
+import org.activiti.engine.*;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.junit.Test;
@@ -25,14 +23,47 @@ public class ActivitiApplicationTest {
 
     private  static final Logger LOGGER=LoggerFactory.getLogger(ActivitiApplicationTest.class);
 
+    /**
+     * 提供一系列管理流程定义和流程部署的API。
+     */
     @Autowired
     private RepositoryService repositoryService;//存储服务
 
+    /**
+     * 在流程运行时对流程实例进行管理与控制。
+     */
     @Autowired
     private RuntimeService runtimeService;//运行时服务
 
+    /**
+     * 对流程任务进行管理，例如任务提醒、任务完成和创建任务分本任务等。
+     */
     @Autowired
     private TaskService taskService;//任务服务
+
+    /**
+     * 提供对流程角色数据进行管理的API，这些角色数据包括用户组、用户以及它们之间的关系。
+     */
+    @Autowired
+    private IdentityService identityService;//角色服务
+
+    /**
+     * 提供对流程引擎进行管理和维护的服务。
+     */
+    @Autowired
+    private ManagementService managementService;//管理和维护服务
+
+    /**
+     * 对流程的历史数据进行操作，包括查询、删除这些历史数据。
+     */
+    @Autowired
+    private HistoryService historyService;//历史数据服务
+
+    /**
+     * 使用该服务，可以不需要重新部署流程模型，就可以实现对流程模型的部分修改
+     */
+    @Autowired
+    private DynamicBpmnService dynamicBpmnService;//流程模型服务
 
     /**
      * 测试部署一个bpmn流程文件
