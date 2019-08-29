@@ -62,7 +62,7 @@ public class ActivitiModelController {
         editorNode.put("resourceId", ACTIVITI_ID_VALUE);
         ObjectNode stencilSetNode = objectMapper.createObjectNode();
         stencilSetNode.put("namespace",ACTIVITI_NAMESPACE_VALUE);
-        editorNode.put("stencilset", stencilSetNode);
+        editorNode.replace("stencilset", stencilSetNode);
         repositoryService.addModelEditorSource(model.getId(),editorNode.toString().getBytes("utf-8"));
         response.sendRedirect(ACTIVITI_REDIRECT_MODELER_INDEX + model.getId());
     }

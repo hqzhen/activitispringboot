@@ -15,10 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 
@@ -227,6 +227,72 @@ public class ActivitiApplicationTest {
         deployment.addBpmnModel("Test AddBpmModel",model);
         deployment.deploy();
 
+    }
+
+    /**
+     * 流程部署验证（格式有误案例）
+     * 不符合格式的默认是无法部署成功的
+     */
+    @Test
+    public void testSchemaError(){
+        DeploymentBuilder deployment = repositoryService.createDeployment();
+        deployment.addClasspathResource("processes/schema_error.bpmn");
+        //deployment.disableSchemaValidation();关闭格式校验则可以部署成功
+        deployment.deploy();
+    }
+
+    /**
+     * 流程部署验证（流程有误案例）
+     * 不符合格式的默认是无法部署成功的
+     */
+    @Test
+    public void testBpmError(){
+        DeploymentBuilder deployment = repositoryService.createDeployment();
+        deployment.addClasspathResource("processes/bpmn_error.bpmn");
+        //deployment.disableBpmnValidation();//关闭流程校验则可以部署成功
+        deployment.deploy();
+    }
+
+    /**
+     * 查询部署资源
+     * 查询文件、流程文件、流程图
+     */
+    @Test
+    public void testQueryResource() throws IOException {
+        //查询文件
+        InputStream resourceAsStream = repositoryService
+                .getResourceAsStream("1", "processes/firstbpm.bpmn");
+        int count =resourceAsStream.available();
+        byte[] contents=new byte[count];
+        resourceAsStream.read(contents);
+        String result=new String(contents);
+        //输出结果
+        System.out.println(result);
+
+        //查询流程图片
+        InputStream processDiagram = repositoryService.getProcessDiagram("myProcess:1:4");
+        //将输入流转为图片对象
+        BufferedImage image=ImageIO.read(processDiagram);
+        //保存为图片对象
+        File file=new File(this.getClass().getClassLoader().getResource("").getPath()+"/result.png");
+        if(!file.exists()){
+            file.createNewFile();
+        }
+        FileOutputStream fileOutputStream=new FileOutputStream(file);
+        ImageIO.write(image,"png",fileOutputStream);
+        fileOutputStream.close();
+        processDiagram.close();
+    }
+
+    /**
+     * 级联删除流程部署
+     * 1.不管是否指定级联，都会删除部署相关的身份数据、流程定义数据、流程资源与部署数据。
+     * 2.如果设置为级联删除，则会将运行的流程实例、流程任务以及流程的历史数据删除。
+     * 3.如果不级联删除，但是存在运行时数据，如果还有流程实例，就会删除失败。
+     */
+    @Test
+    public void testDelDeployment(){
+        repositoryService.deleteDeployment("20001",true);
     }
 
 }
