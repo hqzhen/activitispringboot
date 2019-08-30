@@ -383,5 +383,71 @@ public class ActivitiApplicationTest {
         taskService.complete(task.getId());
     }
 
+    /**
+     * 任务参数
+     * 基本数据类型参数
+     * 序列化参数
+     */
+    @Test
+    public void testTaskVar(){
+        //查询一个任务
+        Task task = taskService.createTaskQuery().taskId("1000").singleResult();
+        if(task==null){//创建一个测试任务
+            task = taskService.newTask("1000");
+            task.setName("测试任务");
+            taskService.saveTask(task);
+        }
+
+        //保存基本类型
+        taskService.setVariable(task.getId(),"var1","hello2");
+        //保存对象类型
+        User user =identityService.newUser("1000");
+        taskService.setVariable(task.getId(),"user1",user);
+
+        //获取参数
+        String var = taskService.getVariable(task.getId(), "var1", String.class);
+        System.out.println("var1:"+var);
+        User user1 = taskService.getVariable(task.getId(), "user1", User.class);
+        System.out.println("user1:"+user.getId());
+    }
+
+    /**
+     * 参数作用域
+     * 本地参数
+     * 全局参数
+     */
+    @Test
+    public void testTaskVarSpace(){
+        //部署一个流程
+        repositoryService.createDeployment().addClasspathResource("processes/firstbpm.bpmn").deploy();
+        //开启一个流程
+        ProcessInstance myProcess = runtimeService.startProcessInstanceByKey("myProcess");
+        //获取当前流程节点
+        Task task = taskService.createTaskQuery().processInstanceId(myProcess.getId()).singleResult();
+        while (Boolean.TRUE){
+            if(task==null){
+                System.out.println("流程结束："+task);
+                break;
+            }else{
+                //设置全局参数
+                taskService.setVariable(task.getId(),"days",3);
+                //设置本地参数
+                taskService.setVariableLocal(task.getId(),"desc","建议");
+                System.out.println("任务"+task.getId()
+                        +"全局参数days:"+taskService.getVariable(task.getId(),"days")
+                        +" 本地参数desc:"+taskService.getVariableLocal(task.getId(),"desc"));
+                //完成当前节点
+                taskService.complete(task.getId());
+                //再次获取当前节点
+                task = taskService.createTaskQuery().processInstanceId(myProcess.getId()).singleResult();
+                if(task!=null){
+                    System.out.println("任务"+task.getId()
+                            +"全局参数days:"+taskService.getVariable(task.getId(),"days")
+                            +" 本地参数desc:"+taskService.getVariableLocal(task.getId(),"desc"));
+                }
+            }
+        }
+    }
+
 
 }
