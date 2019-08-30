@@ -4,7 +4,9 @@ import org.activiti.bpmn.model.*;
 import org.activiti.bpmn.model.Process;
 import org.activiti.engine.*;
 import org.activiti.engine.identity.Group;
+import org.activiti.engine.identity.User;
 import org.activiti.engine.repository.DeploymentBuilder;
+import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.junit.Test;
@@ -294,5 +296,92 @@ public class ActivitiApplicationTest {
     public void testDelDeployment(){
         repositoryService.deleteDeployment("20001",true);
     }
+
+    /**
+     * 中止与激活流程定义
+     * SuspendProcessDefinitionByXXX
+     * ActivateProcessDefinitionByXXX
+     * 1.被中止的流程不能启动流程实例。
+     * 2.如果已经是激活状态，再调用激活方法，会抛出ActivitiException,中止亦然。
+     */
+    @Test
+    public void testSuspendAndActivateProcess(){
+        //根据key激活流程定义,表act_re_procdef的SUSPENSION_STATE_ 1表示激活 2表示中止
+        repositoryService.activateProcessDefinitionByKey("process");
+        //中止流程定义
+        //repositoryService.suspendProcessDefinitionByKey("process");
+    }
+
+    /**
+     * 流程定义权限设置
+     * 1.可以用Activiti自带的用户信息，也可以用自定义系统中的用户角色
+     */
+    @Test
+    public void testProcessRole(){
+        //创建一个测试角色
+        /*User user = identityService.newUser("1000");
+        user.setFirstName("猪");
+        user.setLastName("大宝");
+        identityService.saveUser(user);*/
+
+        //获取一个流程定义
+        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().deploymentId("15002").singleResult();
+        //添加候选用户
+        //repositoryService.addCandidateStarterUser(processDefinition.getId(),"HQ zheng");
+        //添加候选组
+        //repositoryService.addCandidateStarterGroup(processDefinition.getId(),"TestGroup");
+
+        //查询该用户可以启动哪些流程
+        List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery().startableByUser("HQ zheng").list();
+        for (ProcessDefinition definition : processDefinitions) {
+            System.out.println(definition.getId()+","+definition.getName());
+        }
+    }
+
+    /**
+     * 任务权限
+     * 任务候选人（组）、任务持有人、任务代理人
+     */
+    @Test
+    public void tesTaskRole(){
+        Task task = taskService.createTaskQuery().taskId("2000").singleResult();
+        if(task==null){//创建一个测试任务
+            task = taskService.newTask("2000");
+            task.setName("测试任务2");
+            taskService.saveTask(task);
+        }
+        //给任务添加任务候选组
+        taskService.addCandidateGroup(task.getId(),"Test");
+        //设置持有人
+        taskService.setOwner(task.getId(),"FJ Wu");
+        //设置代理人
+        //taskService.setAssignee(task.getId(),"HQ Zheng");
+        taskService.claim(task.getId(),"HQ Zheng");
+        //根据用户组查找持有的任务
+        List<Task> taskList = taskService.createTaskQuery().taskCandidateGroup("Test").list();
+        for (Task t : taskList) {
+            System.out.println(t.getId()+","+t.getName());
+        }
+    }
+
+    /**
+     * 任务的声明与完成
+     *
+     */
+    @Test
+    public void testTaskStatement(){
+        //查询一个任务
+        Task task = taskService.createTaskQuery().taskId("1000").singleResult();
+        if(task==null){//创建一个测试任务
+            task = taskService.newTask("1000");
+            task.setName("测试任务");
+            taskService.saveTask(task);
+        }
+        //任务声明
+        taskService.claim(task.getId(),"HQ Zheng");
+        //完成任务
+        taskService.complete(task.getId());
+    }
+
 
 }
