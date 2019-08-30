@@ -5,6 +5,7 @@ import org.activiti.bpmn.model.Process;
 import org.activiti.engine.*;
 import org.activiti.engine.identity.Group;
 import org.activiti.engine.identity.User;
+import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.DeploymentBuilder;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
@@ -447,6 +448,26 @@ public class ActivitiApplicationTest {
                 }
             }
         }
+    }
+
+    /**
+     * 执行流
+     * ProcessInstance 主执行流
+     * Execution 子执行流
+     */
+    @Test
+    public void testProcessInstance(){
+        //查找部署定义
+        Deployment deployment = repositoryService.createDeploymentQuery().deploymentId("77501").singleResult();
+        if(deployment==null){
+            //部署一个多分支的流程文件
+            deployment=repositoryService.createDeployment().addClasspathResource("processes/multi.bpmn").deploy();
+        }
+        //获取一个流程定义
+        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().deploymentId(deployment.getId()).singleResult();
+        //启动一个流程 在act_ru_execution产生记录，一条主执行流和分支执行流（有多少个分支就会有多少个子执行流）
+        runtimeService.startProcessInstanceById(processDefinition.getId());
+
     }
 
 
