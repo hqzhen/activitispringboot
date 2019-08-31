@@ -8,6 +8,7 @@ import org.activiti.engine.identity.User;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.DeploymentBuilder;
 import org.activiti.engine.repository.ProcessDefinition;
+import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.junit.Test;
@@ -64,13 +65,13 @@ public class ActivitiApplicationTest {
     @Autowired
     private IdentityService identityService;//角色服务
 
-   /* *//**
+    /**
      * 提供对流程引擎进行管理和维护的服务。
-     *//*
+     */
     @Autowired
     private ManagementService managementService;//管理和维护服务
 
-    *//**
+    /**//**
      * 对流程的历史数据进行操作，包括查询、删除这些历史数据。
      *//*
     @Autowired
@@ -468,6 +469,133 @@ public class ActivitiApplicationTest {
         //启动一个流程 在act_ru_execution产生记录，一条主执行流和分支执行流（有多少个分支就会有多少个子执行流）
         runtimeService.startProcessInstanceById(processDefinition.getId());
 
+    }
+
+    /**
+     * 流程触发
+     * ReceiveTask
+     */
+    @Test
+    public void testReceiveTask(){
+        //部署流程资源
+        Deployment deployment = repositoryService
+                .createDeployment()
+                .addClasspathResource("processes/receiveTask.bpmn")
+                .deploy();
+        //获取流程定义
+        ProcessDefinition processDefinition = repositoryService
+                .createProcessDefinitionQuery()
+                .deploymentId(deployment.getId())
+                .singleResult();
+        //启动流程
+        ProcessInstance processInstance = runtimeService.startProcessInstanceById(processDefinition.getId());
+        //查询当前子执行流
+        Execution execution = runtimeService.createExecutionQuery()
+                .processInstanceId(processInstance.getId())
+                .onlyChildExecutions().singleResult();
+        //打印当前节点
+        System.out.println(processInstance.getId()+",当前节点："+execution.getActivityId());
+        //向前执行
+        runtimeService.trigger(execution.getId());
+        execution = runtimeService.createExecutionQuery()
+                .processInstanceId(processInstance.getId())
+                .onlyChildExecutions().singleResult();
+        //打印当前节点
+        System.out.println(processInstance.getId()+",当前节点："+execution.getActivityId());
+    }
+
+    /**
+     * 触发信号事件（广播）
+     * SingleEvent
+     * 捕获事件（Catching）
+     * 抛出异常事件（Throwing）
+     */
+    @Test
+    public void testSingleEvent(){
+        //部署流程资源
+        Deployment deployment = repositoryService
+                .createDeployment()
+                .addClasspathResource("processes/SingleEvent.bpmn")
+                .deploy();
+        //获取流程定义
+        ProcessDefinition processDefinition = repositoryService
+                .createProcessDefinitionQuery()
+                .deploymentId(deployment.getId())
+                .singleResult();
+        //启动流程
+        ProcessInstance processInstance = runtimeService.startProcessInstanceById(processDefinition.getId());
+        //查询当前子执行流
+        Execution execution = runtimeService.createExecutionQuery()
+                .processInstanceId(processInstance.getId())
+                .onlyChildExecutions().singleResult();
+        //打印当前节点
+        System.out.println(processInstance.getId()+",当前节点："+execution.getActivityId());
+        //发送信号
+        runtimeService.signalEventReceived("testSignal");
+        execution = runtimeService.createExecutionQuery()
+                .processInstanceId(processInstance.getId())
+                .onlyChildExecutions().singleResult();
+        //打印当前节点
+        System.out.println(processInstance.getId()+",当前节点："+execution.getActivityId());
+    }
+
+    /**
+     * 触发消息事件
+     * (订阅)
+     * MessageEvent
+     */
+    @Test
+    public void testMessageEvent(){
+        //部署流程资源
+        Deployment deployment = repositoryService
+                .createDeployment()
+                .addClasspathResource("processes/MessageEvent.bpmn")
+                .deploy();
+        //获取流程定义
+        ProcessDefinition processDefinition = repositoryService
+                .createProcessDefinitionQuery()
+                .deploymentId(deployment.getId())
+                .singleResult();
+        //启动流程
+        ProcessInstance processInstance = runtimeService.startProcessInstanceById(processDefinition.getId());
+        //查询当前子执行流
+        Execution execution = runtimeService.createExecutionQuery()
+                .processInstanceId(processInstance.getId())
+                .onlyChildExecutions().singleResult();
+        //打印当前节点
+        System.out.println(processInstance.getId()+",当前节点："+execution.getActivityId());
+        //发送信号
+        runtimeService.messageEventReceived("testMsg",execution.getId());
+        execution = runtimeService.createExecutionQuery()
+                .processInstanceId(processInstance.getId())
+                .onlyChildExecutions().singleResult();
+        //打印当前节点
+        System.out.println(processInstance.getId()+",当前节点："+execution.getActivityId());
+    }
+
+    /**
+     * 产生工作
+     * 异步任务 act_ru_job
+     * 定时事件 act_ru_timer_job
+     * 暂停的工作 act_ru_suspended_job
+     * 无法执行的工作 act_ru_deadletter_job
+     *
+     */
+    //异步任务 act_ru_job
+    @Test
+    public void testServiceTask(){
+        //部署流程资源
+        Deployment deployment = repositoryService
+                .createDeployment()
+                .addClasspathResource("processes/service_task.bpmn")
+                .deploy();
+        //获取流程定义
+        ProcessDefinition processDefinition = repositoryService
+                .createProcessDefinitionQuery()
+                .deploymentId(deployment.getId())
+                .singleResult();
+        //启动流程
+        ProcessInstance processInstance = runtimeService.startProcessInstanceById(processDefinition.getId());
     }
 
 
